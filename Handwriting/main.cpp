@@ -151,28 +151,31 @@ void addToCanvas(int curPosi, int curPosj, string character, std::map<string, in
     }
     tempFileObj.close();
     
-    //Открываем буферный .txt файл для чтения в массив
-    ifstream tempFileObj2;
-    tempFileObj2.open("temp.txt");
-    
-    //Создаем буферный массив для символа
-    int bufArray[cWidth*cHeight][3];
-    
-    //Заполняем буферный массив данными из .txt файла
-    readFile(cWidth, cHeight, bufArray, tempFileObj2);
-    
-    cout << "Буферный массив успешно создан" << endl << endl;
-
-    
-    //Записываем данные из буферного массива в массив холста
-    for (int i=0; i<cWidth*cHeight; i++) {
-        int bufi = curPosi-cHeight+1+floor(i/cWidth);
-        int bufj = curPosj+i%cWidth;
-        int n=(bufi-1)*WIDTH+bufj-1;
-        canvas[n][0]=bufArray[i][0]; canvas[n][1]=bufArray[i][1]; canvas[n][2]=bufArray[i][2];
+    if ((curPosi-cHeight<0)||(curPosj+cWidth-1>WIDTH)) {
+        cout << "НЕВЕРНО ВЫБРАНО ПОЛОЖЕНИЕ КУРСОРА" << endl;
+    }else{
+        
+        //Открываем буферный .txt файл для чтения в массив
+        ifstream tempFileObj2;
+        tempFileObj2.open("temp.txt");
+        
+        //Создаем буферный массив для символа
+        int bufArray[cWidth*cHeight][3];
+        
+        //Заполняем буферный массив данными из .txt файла
+        readFile(cWidth, cHeight, bufArray, tempFileObj2);
+        
+        cout << "Буферный массив успешно создан" << endl << endl;
+        
+        //Записываем данные из буферного массива в массив холста
+        for (int i=0; i<cWidth*cHeight; i++) {
+            int bufi = curPosi-cHeight+1+floor(i/cWidth);
+            int bufj = curPosj+i%cWidth;
+            int n=(bufi-1)*WIDTH+bufj-1;
+            canvas[n][0]=bufArray[i][0]; canvas[n][1]=bufArray[i][1]; canvas[n][2]=bufArray[i][2];
+        }
+        tempFileObj2.close();
     }
-    
-    
     
     
     charObj.close();
@@ -249,7 +252,7 @@ int main() {
     std::map<string, int> encoding;
     fillEncoding(encoding);
     
-    cout << "Добавляем букву в массив холста..." << endl;
+    cout << "Добавляем букву в массив холста..." << endl << endl;
     addToCanvas(curPosi, curPosj, "Ю", encoding, canvas);
     
     
