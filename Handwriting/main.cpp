@@ -5,6 +5,11 @@
 //  Created by Даниил Волошин on 2/14/19.
 //  Copyright © 2019 Даниил Волошин. All rights reserved.
 //
+//  WARNING!!!
+//  Типичные ошибки:
+//  * Перепутать расширение файлов (.ppm и .pbm)
+//  * Неверно задать curPos
+
 
 #include <iostream>
 #include <fstream>
@@ -106,6 +111,7 @@ void readFile(int cWidth, int cHeight, int bufArray[cWidth*cHeight][3], ifstream
     f.seekg(0, std::ios::beg); // back to the start!
 }
 
+
 //Функция, которая добавляет выбранный символ в заданное место на холсте
 void addToCanvas(int curPosi, int curPosj, string character, std::map<string, int> &encoding, vector< vector<int> > &canvas){
     
@@ -116,6 +122,7 @@ void addToCanvas(int curPosi, int curPosj, string character, std::map<string, in
     //Имя файла                     !!!ВНИМАНИЕ!!!      !!!СМОТРИ КАКОЕ РАСШИРЕНИЕ У ТВОИХ ФАЙЛОВ!!!
     srand(time(0));
     string fileName = "Symbols/char" + to_string(idx) + "/" + to_string(idx) + "-" + to_string(1+(rand()%8)) + ".pbm";
+    cout << fileName << endl << endl;
     
     //Открываем файл символа
     ifstream charObj;
@@ -154,6 +161,8 @@ void addToCanvas(int curPosi, int curPosj, string character, std::map<string, in
     //Заполняем буферный массив данными из .txt файла
     readFile(cWidth, cHeight, bufArray, tempFileObj2);
     
+    cout << "Буферный массив успешно создан" << endl << endl;
+
     
     //Записываем данные из буферного массива в массив холста
     for (int i=0; i<cWidth*cHeight; i++) {
@@ -220,7 +229,7 @@ int main() {
     
     
     //Создаем массив (вектор) холста (4960x7014=34789440)
-    cout << "Генерируем массив холста..." << endl;
+    cout << "Генерируем массив холста..." << endl << endl;
     vector< vector<int> > canvas(WIDTH*HEIGHT, vector<int>(3));
     cout << "Массив сгенерирован" << endl << endl;;
     
@@ -233,8 +242,8 @@ int main() {
     
     
     //Создаем переменную курсора
-    int curPosi=10; //значение строки
-    int curPosj=3; //значение столбца
+    int curPosi=13; //значение строки
+    int curPosj=2; //значение столбца
     
     //Создаем map кодировки
     std::map<string, int> encoding;
@@ -243,9 +252,6 @@ int main() {
     cout << "Добавляем букву в массив холста..." << endl;
     addToCanvas(curPosi, curPosj, "Ю", encoding, canvas);
     
-    for (int i=0; i<WIDTH*HEIGHT; i++) {
-        //cout << canvas[i][0] << endl;
-    }
     
     
     canvasObj << "P3" << endl;
@@ -255,34 +261,17 @@ int main() {
         canvasObj << canvas[i][0] << " " << canvas[i][1] << " " << canvas[i][2] << endl;
     }
     
-    canvasObj.close();
     
     
-    /*
-    //ТЕСТ ЧТЕНИЯ PPM
-    int bufArray[92*122][3];
-    ifstream fileObjTest;
-    fileObjTest.open("32-1.txt");
-    readf(92, 122, bufArray, fileObjTest);
-    for (int i=0; i<92*122; i++) {
-        cout << bufArray[i][0] << " " <<  bufArray[i][1] << " "<<  bufArray[i][2] << endl;
-    }
     
-    
-    //СОЗДАТЬ PPM
-    ofstream fileObjTest2("32-1Gen.ppm");
-    fileObjTest2 << "P3" << endl;
-    fileObjTest2 << 92 << " " << 122 << endl;
-    fileObjTest2 << "255" << endl;
-    for (int i=0; i<92*122; i++) {
-        fileObjTest2 << bufArray[i][0] << " " << bufArray[i][1] << " " << bufArray[i][2] << endl;
-    }
-    */
     
     
     
 
 
     cout << endl;
+    fileObj1.close();
+    fileObj2.close();
+    canvasObj.close();
     return 0;
 }
