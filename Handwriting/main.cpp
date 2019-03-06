@@ -20,10 +20,14 @@
 #include <map>
 using namespace std;
 
-//#define WIDTH 4960
-//#define HEIGHT 7014
-#define WIDTH 10
-#define HEIGHT 15
+#define WIDTH 4960
+#define HEIGHT 7014
+
+//#define WIDTH 100
+//#define HEIGHT 200
+
+//#define WIDTH 10
+//#define HEIGHT 15
 
 
 //Функция, которая заполянет мой std::map моей кодировкой (в будущем добавить заполнением из файла)
@@ -252,16 +256,25 @@ int main() {
     std::map<string, int> encoding;
     fillEncoding(encoding);
     
+    
+    
     cout << "Добавляем букву в массив холста..." << endl << endl;
     addToCanvas(curPosi, curPosj, "Ю", encoding, canvas);
+    cout << "Буква добавлена в массив" << endl;
     
     
-    
+    //Запись файла холста занимает около двух минут
+    cout << "Записываем массив холста в .ppm файл холста..." << endl;
     canvasObj << "P3" << endl;
     canvasObj << WIDTH << " " << HEIGHT << endl;
     canvasObj << "255" << endl;
     for (int i=0; i<WIDTH*HEIGHT; i++) {
         canvasObj << canvas[i][0] << " " << canvas[i][1] << " " << canvas[i][2] << endl;
+        //cout << i << "-й пиксел записан" << endl;
+        int percentMarker = floor(WIDTH*HEIGHT*0.01);
+        if (i%percentMarker==0) {
+            cout << floor(i/percentMarker) << "%" << endl;
+        }
     }
     
     
