@@ -4,11 +4,24 @@
 //
 //  Created by Даниил Волошин on 2/14/19.
 //  Copyright © 2019 Даниил Волошин. All rights reserved.
-//
+
+
+//  ТЕКУЩИЕ КОСЯКИ
+//  * У некоторых символов в нижнем правом углу возникают битые пикселы
+//  * Плохо работает рандом (он сначала выбирает рандомное число, а потом подставляет его в абсолютно все адреса)
+//  * Даже если в тексте найдены неподдерживаемые символы, программа все равно продолжит пытаться что-то записать (добавить bool флаг)
+
+
 //  WARNING!!!
 //  Типичные ошибки:
 //  * Перепутать расширение файлов (.ppm и .pbm)
 //  * Неверно задать curPos
+
+
+//Требования к изображениям символов:
+//  * Ширина символа не менее 8 пикселей
+//  * Высота символа строго 110 пикселей
+//  * Файлов в каждой папке должно быть 8
 
 
 #include <iostream>
@@ -18,16 +31,18 @@
 #include <cmath>
 #include <ctime>
 #include <map>
+
 using namespace std;
 
 #define WIDTH 4960
 #define HEIGHT 7014
+#define TRACKING 10      //трекинг
+#define CHARHEIGHT 110   //высота символов
+#define LEADING 40       //интерлиньяж
+#define LEFTMARGIN 350   //отступ слева
+#define RIGHTMARGIN 200  //отступ справа
+#define SPACE 100        //расстояние между словами
 
-//#define WIDTH 100
-//#define HEIGHT 200
-
-//#define WIDTH 10
-//#define HEIGHT 15
 
 
 //Функция, которая заполянет мой std::map моей кодировкой (в будущем добавить заполнением из файла)
@@ -117,14 +132,14 @@ void readFile(int cWidth, int cHeight, int bufArray[cWidth*cHeight][3], ifstream
 
 
 //Функция, которая добавляет выбранный символ в заданное место на холсте
-void addToCanvas(int curPosi, int curPosj, string character, std::map<string, int> &encoding, vector< vector<int> > &canvas){
+void addToCanvas(int *curPosi, int *curPosj, string character, std::map<string, int> &encoding, vector< vector<int> > &canvas){
     
     //Номер символа в моей кодировке
     int idx;
     idx=encoding[character];
     
     //Имя файла                     !!!ВНИМАНИЕ!!!      !!!СМОТРИ КАКОЕ РАСШИРЕНИЕ У ТВОИХ ФАЙЛОВ!!!
-    srand(time(0));
+    srand(time(0)+*curPosi);
     string fileName = "Symbols/char" + to_string(idx) + "/" + to_string(idx) + "-" + to_string(1+(rand()%8)) + ".pbm";
     cout << fileName << endl << endl;
     
@@ -155,7 +170,7 @@ void addToCanvas(int curPosi, int curPosj, string character, std::map<string, in
     }
     tempFileObj.close();
     
-    if ((curPosi-cHeight<0)||(curPosj+cWidth-1>WIDTH)) {
+    if ((*curPosi-cHeight<0)||(*curPosj+cWidth-1>WIDTH)) {
         cout << "НЕВЕРНО ВЫБРАНО ПОЛОЖЕНИЕ КУРСОРА" << endl;
     }else{
         
@@ -173,11 +188,21 @@ void addToCanvas(int curPosi, int curPosj, string character, std::map<string, in
         
         //Записываем данные из буферного массива в массив холста
         for (int i=0; i<cWidth*cHeight; i++) {
-            int bufi = curPosi-cHeight+1+floor(i/cWidth);
-            int bufj = curPosj+i%cWidth;
+            int bufi = *curPosi-cHeight+1+floor(i/cWidth);
+            int bufj = *curPosj+i%cWidth;
             int n=(bufi-1)*WIDTH+bufj-1;
             canvas[n][0]=bufArray[i][0]; canvas[n][1]=bufArray[i][1]; canvas[n][2]=bufArray[i][2];
         }
+        
+        //Корректируем значения curposi и curposj
+        *curPosj+=cWidth+TRACKING;
+        //Если дошли до конца строки на листе
+        if (*curPosj>=WIDTH-RIGHTMARGIN) {
+            *curPosj=LEFTMARGIN;
+            *curPosi+=LEADING+110; //110 - высота всех символов
+        }
+        
+        
         tempFileObj2.close();
     }
     
@@ -201,7 +226,7 @@ int main() {
     
     //Разбираемся с файлами
     ifstream fileObj1;
-    fileObj1.open("text.txt"); //файл с текстом
+    fileObj1.open("textcopy2.txt"); //файл с текстом
     
     ifstream fileObj2;
     fileObj2.open("myChars.txt"); //файл с поддерживаемыми символами
@@ -209,31 +234,36 @@ int main() {
     ofstream canvasObj;
     canvasObj.open("canvas.ppm"); //файл холста
     
-    string line; //буферный string для построчного чтения файлов
-
+    string line;         //буферный string для построчного чтения файлов
+    string text = "";    //переменная моего текста
+    string myChars = ""; //переменная моей "азбуки" (нужна для проверки на неподдерживаемые символы)
     
-    string text = ""; //переменная моего текста
-    string myChars = ""; //переменная моей "азбуки"
+    //Переменные курсора
+    int curPosi=600; //значение строки
+    int curPosj=LEFTMARGIN; //значение столбца
     
-
-    //Записать первый файл в string
+    
+    //Записываем файл с текстом в string (чтобы проверить, есть ли в тексте неподдерживаемые символы)
     while(getline(fileObj1, line))
     {
         //cout << line << endl;
         text += line;
     }
     
-    //Записать второй файл в string
+    //Записываем файл с кодировкой в string (чтобы проверить, есть ли в тексте неподдерживаемые символы)
     while(getline(fileObj2, line))
     {
         //cout << line << endl;
         myChars += line;
     }
     
-    
     //Проверяем, есть ли в нашем тексте неподдерживаемые символы
     allIncluded(text, myChars);
+    fileObj1.close();
     
+    //Создаем map кодировки
+    std::map<string, int> encoding;
+    fillEncoding(encoding);
     
     //Создаем массив (вектор) холста (4960x7014=34789440)
     cout << "Генерируем массив холста..." << endl << endl;
@@ -248,19 +278,76 @@ int main() {
     cout << "Массив заполнен успешно" << endl << endl;
     
     
-    //Создаем переменную курсора
-    int curPosi=13; //значение строки
-    int curPosj=2; //значение столбца
-    
-    //Создаем map кодировки
-    std::map<string, int> encoding;
-    fillEncoding(encoding);
+    //Заново создаем объект файла с текстом (чтобы уже посимвольно его читать)
+    ifstream textObj;
+    textObj.open("text.txt");
     
     
+    //Построчно читаем файл с текстом
+    while(getline(textObj, line))
+    {
+        //Если попался enter
+        if (line.length()==0) {
+            //cout << "Хм, у нас тут enter" << endl;
+            curPosj=LEFTMARGIN;
+            //curPosi+=LEADING+110; //110 - высота всех символов
+            curPosi+=110; //110 - высота всех символов
+        }
+        
+        //Посимвольно читаем текущую строку
+        for (int i=0; i<line.length(); i++) {
+            
+            bool isNormal = true;   //флаг, который показывает, является ли текущий символ нормальным (однобайтовым)
+            string curChar;         //буферная переменная текущего символа
+            
+            //Если попался пробел
+            if (line[i]==' ') {
+                curPosj+=SPACE;
+                //Если дошли до конца строки на листе
+                if (curPosj>=WIDTH-RIGHTMARGIN) {
+                    curPosj=LEFTMARGIN;
+                    curPosi+=LEADING+110; //110 - высота всех символов
+                }
+            }
+            
+            //Если попался двубайтный символ
+            if ((line[i]=="Ы"[0])||(line[i]=="ё"[0])||(line[i]=="—"[0])) {
+                curChar=line.substr(i,2);
+                //cout << curChar << endl;
+                i++;
+                isNormal = false;
+                addToCanvas(&curPosi, &curPosj, curChar, encoding, canvas);
+            }
+            
+            //Если попался нормальный символ
+            if ((isNormal)&&(line[i]!=' ')) {
+                curChar=line[i];
+                //cout << curChar << endl;
+                addToCanvas(&curPosi, &curPosj, curChar, encoding, canvas);
+            }
+            
+            
+            
+        }//конец посимвольного цикла
+        
+        //в конце строки делаем enter
+        curPosj=LEFTMARGIN;
+        curPosi+=LEADING+110; //110 - высота всех символов
     
-    cout << "Добавляем букву в массив холста..." << endl << endl;
-    addToCanvas(curPosi, curPosj, "Ю", encoding, canvas);
-    cout << "Буква добавлена в массив" << endl;
+    }//конец цикла while
+
+    
+    /*
+    
+    cout << "Добавляем букву \"Ю\" в массив холста..." << endl;
+    addToCanvas(&curPosi, &curPosj, "Ю", encoding, canvas);
+    cout << "Буква добавлена в массив" << endl << endl;
+    
+    cout << "Добавляем букву \"Я\" в массив холста..." << endl;
+    addToCanvas(&curPosi, &curPosj, "Я", encoding, canvas);
+    cout << "Буква добавлена в массив" << endl << endl;
+     
+    */
     
     
     //Запись файла холста занимает около двух минут
@@ -270,7 +357,6 @@ int main() {
     canvasObj << "255" << endl;
     for (int i=0; i<WIDTH*HEIGHT; i++) {
         canvasObj << canvas[i][0] << " " << canvas[i][1] << " " << canvas[i][2] << endl;
-        //cout << i << "-й пиксел записан" << endl;
         int percentMarker = floor(WIDTH*HEIGHT*0.01);
         if (i%percentMarker==0) {
             cout << floor(i/percentMarker) << "%" << endl;
