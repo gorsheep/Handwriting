@@ -8,8 +8,9 @@
 
 //  ТЕКУЩИЕ КОСЯКИ
 //  * У некоторых символов в нижнем правом углу возникают битые пикселы
-//  * Плохо работает рандом (он сначала выбирает рандомное число, а потом подставляет его в абсолютно все адреса)
 //  * Даже если в тексте найдены неподдерживаемые символы, программа все равно продолжит пытаться что-то записать (добавить bool флаг)
+//  * Не работает символ тире ("—")
+//  * Программа создает лишь один лист (если текста больше, то просто заполняется один лист и все)
 
 
 //  WARNING!!!
@@ -29,7 +30,6 @@
 #include <cstdlib>
 #include <vector>
 #include <cmath>
-#include <ctime>
 #include <map>
 
 using namespace std;
@@ -139,8 +139,7 @@ void addToCanvas(int *curPosi, int *curPosj, string character, std::map<string, 
     idx=encoding[character];
     
     //Имя файла                     !!!ВНИМАНИЕ!!!      !!!СМОТРИ КАКОЕ РАСШИРЕНИЕ У ТВОИХ ФАЙЛОВ!!!
-    srand(time(0)+*curPosi);
-    string fileName = "Symbols/char" + to_string(idx) + "/" + to_string(idx) + "-" + to_string(1+(rand()%8)) + ".pbm";
+    string fileName = "Symbols/char" + to_string(idx) + "/" + to_string(idx) + "-" + to_string(1+(*curPosj%8)) + ".pbm";
     cout << fileName << endl << endl;
     
     //Открываем файл символа
@@ -184,7 +183,7 @@ void addToCanvas(int *curPosi, int *curPosj, string character, std::map<string, 
         //Заполняем буферный массив данными из .txt файла
         readFile(cWidth, cHeight, bufArray, tempFileObj2);
         
-        cout << "Буферный массив успешно создан" << endl << endl;
+        //cout << "Буферный массив успешно создан" << endl << endl;
         
         //Записываем данные из буферного массива в массив холста
         for (int i=0; i<cWidth*cHeight; i++) {
@@ -226,7 +225,7 @@ int main() {
     
     //Разбираемся с файлами
     ifstream fileObj1;
-    fileObj1.open("textcopy2.txt"); //файл с текстом
+    fileObj1.open("text.txt"); //файл с текстом
     
     ifstream fileObj2;
     fileObj2.open("myChars.txt"); //файл с поддерживаемыми символами
