@@ -138,9 +138,22 @@ void addToCanvas(int *curPosi, int *curPosj, string character, std::map<string, 
     int idx;
     idx=encoding[character];
     
+    //Запоминаем изначальное текущее положение буквы
+    int initCurPosi = *curPosi;
+    
+    //Если текущий символ -- запятая или точка с запятой, то сдвигаем ее чуть-чуть вниз
+    if ((character==",")||(character==";")) {
+        *curPosi+=20;
+    }
+    else{
+        //Тверкаем значение curPosi, чтобы буквы не лежали на одной линии
+        *curPosi+=-8+(*curPosj%9);
+        //cout << *curPosi << endl;
+    }
+    
     //Имя файла                     !!!ВНИМАНИЕ!!!      !!!СМОТРИ КАКОЕ РАСШИРЕНИЕ У ТВОИХ ФАЙЛОВ!!!
     string fileName = "Symbols/char" + to_string(idx) + "/" + to_string(idx) + "-" + to_string(1+(*curPosj%8)) + ".pbm";
-    cout << fileName << endl << endl;
+    //cout << fileName << endl << endl;
     
     //Открываем файл символа
     ifstream charObj;
@@ -194,6 +207,7 @@ void addToCanvas(int *curPosi, int *curPosj, string character, std::map<string, 
         }
         
         //Корректируем значения curposi и curposj
+        *curPosi=initCurPosi;
         *curPosj+=cWidth+TRACKING;
         //Если дошли до конца строки на листе
         if (*curPosj>=WIDTH-RIGHTMARGIN) {
