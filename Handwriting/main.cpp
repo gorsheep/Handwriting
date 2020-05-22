@@ -7,6 +7,7 @@
 
 
 //  ТЕКУЩИЕ КОСЯКИ
+//  * Рандомность начертания буквы определяется её горизонтальным положением. Это надо исправить, чтобы строки начинались по-разному
 //  * У некоторых символов в нижнем правом углу возникают битые пикселы
 //  * Даже если в тексте найдены неподдерживаемые символы, программа все равно продолжит пытаться что-то записать (добавить bool флаг)
 //  * Не работает символ тире ("—")
@@ -19,7 +20,7 @@
 //  * Неверно задать curPos
 
 
-//Требования к изображениям символов:
+//  Требования к изображениям символов:
 //  * Ширина символа не менее 8 пикселей
 //  * Высота символа строго 110 пикселей
 //  * Файлов в каждой папке должно быть 8
@@ -38,9 +39,10 @@ using namespace std;
 #define HEIGHT 7014
 #define TRACKING 10      //трекинг
 #define CHARHEIGHT 110   //высота символов
-#define LEADING 40       //интерлиньяж
-#define LEFTMARGIN 350   //отступ слева
-#define RIGHTMARGIN 200  //отступ справа
+#define LEADING 30       //интерлиньяж
+#define LEFTMARGIN 550   //отступ слева
+#define RIGHTMARGIN 600  //отступ справа
+//#define RIGHTMARGIN 2600  //отступ справа для двух колонок
 #define SPACE 100        //расстояние между словами
 
 
@@ -86,7 +88,7 @@ void allIncluded(string text, string chars){
         }
         
         if (included==false) {
-            cout << i << "-го символа нет в азбуке" << endl;
+            cout << i << "-го символа нет в азбуке (" << text[i-2] << text[i-1] << "|" << text[i] << text[i+1] << "|" << text[i+2] << ")" << endl;
             allIncluded = false;
             break;
         }
@@ -135,8 +137,7 @@ void readFile(int cWidth, int cHeight, int bufArray[cWidth*cHeight][3], ifstream
 void addToCanvas(int *curPosi, int *curPosj, string character, std::map<string, int> &encoding, vector< vector<int> > &canvas){
     
     //Номер символа в моей кодировке
-    int idx;
-    idx=encoding[character];
+    int idx=encoding[character];
     
     //Запоминаем изначальное текущее положение буквы
     int initCurPosi = *curPosi;
@@ -152,6 +153,9 @@ void addToCanvas(int *curPosi, int *curPosj, string character, std::map<string, 
     }
     
     //Имя файла                     !!!ВНИМАНИЕ!!!      !!!СМОТРИ КАКОЕ РАСШИРЕНИЕ У ТВОИХ ФАЙЛОВ!!!
+    //Рандомная буква выбирается за счет to_string(1+(*curPosj%8)), то есть сидом рандома является горизонатльное положение буквы
+    //на холсте. Это очень плохо! Потому что если две строчки подряд начинаются с одинаковых символов (слов), то они будут иметь
+    //одинаковое начертание. Это надо исправить!
     string fileName = "Symbols/char" + to_string(idx) + "/" + to_string(idx) + "-" + to_string(1+(*curPosj%8)) + ".pbm";
     //cout << fileName << endl << endl;
     
@@ -237,6 +241,8 @@ void addToCanvas(int *curPosi, int *curPosj, string character, std::map<string, 
 
 int main() {
     
+    //cout << "и"[0] << " " << "и"[1] << endl;
+    
     //Разбираемся с файлами
     ifstream fileObj1;
     fileObj1.open("text.txt"); //файл с текстом
@@ -252,7 +258,7 @@ int main() {
     string myChars = ""; //переменная моей "азбуки" (нужна для проверки на неподдерживаемые символы)
     
     //Переменные курсора
-    int curPosi=600; //значение строки
+    int curPosi=500; //значение строки
     int curPosj=LEFTMARGIN; //значение столбца
     
     
@@ -313,6 +319,7 @@ int main() {
             bool isNormal = true;   //флаг, который показывает, является ли текущий символ нормальным (однобайтовым)
             string curChar;         //буферная переменная текущего символа
             
+            
             //Если попался пробел
             if (line[i]==' ') {
                 curPosj+=SPACE;
@@ -323,7 +330,7 @@ int main() {
                 }
             }
             
-            //Если попался двубайтный символ
+            //Если попался двубайтный символ из нашей кодировки (всратые непонятные символы будут пропущены)
             if ((line[i]=="Ы"[0])||(line[i]=="ё"[0])||(line[i]=="—"[0])) {
                 curChar=line.substr(i,2);
                 //cout << curChar << endl;
